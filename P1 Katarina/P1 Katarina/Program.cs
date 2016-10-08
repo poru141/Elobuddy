@@ -187,7 +187,7 @@ namespace P1_Katarina
 
         private static void Loading_OnLoadingComplete(EventArgs args)
         {
-            //Makes sure you are Katarina
+            //Makes sure you are Katarina fdsgfdgdsgsd
             if (User.ChampionName != "Katarina")
                 return;
             Chat.Print("P1 Katarina loaded! Have fun!");
