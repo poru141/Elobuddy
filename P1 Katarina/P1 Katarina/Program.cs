@@ -8,31 +8,21 @@ using EloBuddy.SDK.Menu;
 using EloBuddy.SDK.Menu.Values;
 using EloBuddy.SDK.Rendering;
 using SharpDX;
+using System.Timers;
 
 namespace P1_Katarina
 {
     class Program
     {
-
+       
         static void Main(string[] args)
         {
-            initOld();
-        }
-
-        private static void initOld()
-        {
-
             //happens when done loading
             Loading.OnLoadingComplete += Loading_OnLoadingComplete;
-
-            //used for drawings that dont override game UI
-            Drawing.OnDraw += Drawing_OnDraw;
-            Drawing.OnEndScene += Damage_Indicator;
-
-
-            //happens on every core tick
-            Game.OnTick += Game_OnTick;
+            
         }
+
+       
 
         //makes Player.Instance Player
         private static AIHeroClient User = Player.Instance;
@@ -184,12 +174,27 @@ namespace P1_Katarina
             }
         }
 
+        private static void OnNotify(GameNotifyEventArgs args)
+        {
+            if (args.EventId == GameEventId.OnChampionKill)
+            {
+                //Chat.Print("Kill");
+            }
+
+            if (args.EventId == GameEventId.OnDamageTaken)
+            {
+                //Chat.Print("Damage");
+            }
+
+        }
 
         private static void Loading_OnLoadingComplete(EventArgs args)
         {
+            
             //Makes sure you are Katarina fdsgfdgdsgsd
             if (User.ChampionName != "Katarina")
                 return;
+            
             Chat.Print("P1 Katarina loaded! Have fun!");
             //Creates the menu
             KatarinaMenu = MainMenu.AddMenu("Katarina", "P1 Katarina");
@@ -215,7 +220,7 @@ namespace P1_Katarina
             WardjumpMenu.AddSeparator();
             WardjumpMenu.AddLabel("Keybind Settings");
             var wj = WardjumpMenu.Add("wardjumpKeybind",
-    new KeyBind("WardJump", false, KeyBind.BindTypes.HoldActive, 'T'));
+            new KeyBind("WardJump", false, KeyBind.BindTypes.HoldActive, 'T'));
             GameObject.OnCreate += GameObject_OnCreate;
             Game.OnTick += delegate
             {
@@ -239,7 +244,7 @@ namespace P1_Katarina
             HarassAutoharass.Add("HW", new CheckBox("Use W in harass"));
             HarassAutoharass.Add("AHQ", new CheckBox("Use Q in auto harass"));
             HarassAutoharass.Add("AHW", new CheckBox("Use W in auto harass"));
-
+            
 
 
             //Giving Q values
@@ -258,7 +263,7 @@ namespace P1_Katarina
             SpellList.Add(W);
             SpellList.Add(E);
             SpellList.Add(R);
-
+            
             //Creating menu using foreach from a list
             foreach (var Spell in SpellList)
             {
@@ -266,11 +271,20 @@ namespace P1_Katarina
                 DrawingsMenu.Add(Spell.Slot.ToString(), new CheckBox("Draw " + Spell.Slot));
             }
 
+            Game.OnNotify += OnNotify;
+            //used for drawings that dont override game UI
+            Drawing.OnDraw += Drawing_OnDraw;
+            Drawing.OnEndScene += Damage_Indicator;
 
+
+            //happens on every core tick
+            Game.OnTick += Game_OnTick;
         }
 
         private static void Game_OnTick(EventArgs args)
         {
+
+            
             if (HasRBuff())
             {
                 Orbwalker.DisableMovement = true;
@@ -315,7 +329,8 @@ namespace P1_Katarina
                     W.Cast();
             }
 
-
+           // kills = User.ChampionsKilled;
+            //assists = User.Assists;
         }
         private static void Harass()
         {
