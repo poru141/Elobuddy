@@ -37,7 +37,7 @@ namespace P1_Katarina
         private static Spell.Active R;
 
         //Declare the menu
-        private static Menu KatarinaMenu, ComboMenu, LaneClearMenu, LastHitMenu, HarassAutoharass, WardJumpMenu, DrawingsMenu;
+        private static Menu KatarinaMenu, ComboMenu, LaneClearMenu, LastHitMenu, HarassAutoharass, WardJumpMenu, DrawingsMenu, KillStealMenu, HumanizerMenu;
 
 
         //a list that contains Player spells
@@ -204,7 +204,9 @@ namespace P1_Katarina
             LaneClearMenu = KatarinaMenu.AddSubMenu("Lane Clear");
             LastHitMenu = KatarinaMenu.AddSubMenu("LastHit");
             HarassAutoharass = KatarinaMenu.AddSubMenu("Harass/AutoHarass");
+            KillStealMenu = KatarinaMenu.AddSubMenu("Killsteal");
             WardjumpMenu = KatarinaMenu.AddSubMenu("WardJump");
+            HumanizerMenu = KatarinaMenu.AddSubMenu("Humanizer");
             DrawingsMenu = KatarinaMenu.AddSubMenu("Drawings");
 
 
@@ -244,7 +246,15 @@ namespace P1_Katarina
             HarassAutoharass.Add("HW", new CheckBox("Use W in harass"));
             HarassAutoharass.Add("AHQ", new CheckBox("Use Q in auto harass"));
             HarassAutoharass.Add("AHW", new CheckBox("Use W in auto harass"));
-            
+            KillStealMenu.Add("Q", new CheckBox("Use Q to killsteal"));
+            KillStealMenu.Add("W", new CheckBox("Use W to killsteal"));
+            KillStealMenu.Add("E", new CheckBox("Use E to killsteal", false));
+            KillStealMenu.Add("EW", new CheckBox("Use EW to killsteal",false));
+            HumanizerMenu.Add("Q", new Slider("Q delay", 0, 0, 1000));
+            HumanizerMenu.Add("W", new Slider("W delay", 0, 0, 1000));
+            HumanizerMenu.Add("E", new Slider("E delay", 0, 0, 1000));
+            HumanizerMenu.Add("R", new Slider("R delay", 0, 0, 1000));
+
 
 
             //Giving Q values
@@ -283,8 +293,6 @@ namespace P1_Katarina
 
         private static void Game_OnTick(EventArgs args)
         {
-
-            
             if (HasRBuff())
             {
                 Orbwalker.DisableMovement = true;
@@ -316,15 +324,31 @@ namespace P1_Katarina
                 Orbwalker.DisableAttacking = false;
             }
 
+            var target = TargetSelector.GetTarget(Q.Range, DamageType.Magical);
+            if (QTDamage(target) >= target.Health && KillStealMenu["Q"].Cast<CheckBox>().CurrentValue)
+                Q.Cast(target);
+            target = TargetSelector.GetTarget(W.Range, DamageType.Magical);
+            if (WDamage(target) >= target.Health && KillStealMenu["W"].Cast<CheckBox>().CurrentValue)
+                W.Cast();
+            target = TargetSelector.GetTarget(E.Range, DamageType.Magical);
+            if (EDamage(target) >= target.Health && KillStealMenu["E"].Cast<CheckBox>().CurrentValue)
+                E.Cast(target);
+            target = TargetSelector.GetTarget(E.Range, DamageType.Magical);
+            if (EDamage(target) + WDamage(target) >= target.Health && KillStealMenu["EW"].Cast<CheckBox>().CurrentValue)
+            {
+                E.Cast(target);
+                W.Cast();
+            }
+
             if (HarassAutoharass["AHQ"].Cast<CheckBox>().CurrentValue && Q.IsReady())
             {
-                var target = TargetSelector.GetTarget(Q.Range, DamageType.Magical);
+                target = TargetSelector.GetTarget(Q.Range, DamageType.Magical);
                 if (target.IsValidTarget())
                     Q.Cast(target);
             }
             if (HarassAutoharass["AHW"].Cast<CheckBox>().CurrentValue && W.IsReady())
             {
-                var target = TargetSelector.GetTarget(W.Range, DamageType.Magical);
+                target = TargetSelector.GetTarget(W.Range, DamageType.Magical);
                 if (target.IsValidTarget())
                     W.Cast();
             }
@@ -385,9 +409,9 @@ namespace P1_Katarina
             {
                 //Chat.Print("e w");
 
-
-                E.Cast(target);
-                Program.W.Cast();
+                //LaneClearMenu["Wnumber"].Cast<Slider>().CurrentValue
+                Core.DelayAction(() => E.Cast(target), HumanizerMenu["E"].Cast<Slider>().CurrentValue);
+                Core.DelayAction(() => W.Cast(), HumanizerMenu["W"].Cast<Slider>().CurrentValue);
             }
 
 
@@ -397,37 +421,42 @@ namespace P1_Katarina
                 //Chat.Print("e q w");
 
 
-                E.Cast(target);
-                Q.Cast(target);
-                Program.W.Cast();
+                Core.DelayAction(() => E.Cast(target), HumanizerMenu["E"].Cast<Slider>().CurrentValue);
+                Core.DelayAction(() => Q.Cast(target), HumanizerMenu["Q"].Cast<Slider>().CurrentValue);
+                Core.DelayAction(() => W.Cast(), HumanizerMenu["W"].Cast<Slider>().CurrentValue+50);
             }
             else if (HasRBuff())
             {
                 Orbwalker.DisableAttacking = true;
                 Orbwalker.DisableMovement = true;
             }
+            
             else if (!HasRBuff())
             {
+                target = TargetSelector.GetTarget(Q.Range, DamageType.Magical);
+                //Chat.Print(target.ChampionName);
                 //returns true if Q checkbox is checked
                 //Chat.Print("nothing");
                 if (ComboMenu["Q"].Cast<CheckBox>().CurrentValue)
                 {
                     //returns targetSelector target
-
+                   // Chat.Print("nothing");
                     //checks if target doesn't exist
                     if (target == null)
                         return;
 
 
-                    if (Q.CanCast(target))
+                    if (Q.IsReady())
                     {
+                        //Chat.Print("Q casted");
                         Q.Cast(target);
+
                         if (target == null || E.IsOnCooldown)
                             return;
                         else
                         {
                             if (ComboMenu["E"].Cast<CheckBox>().CurrentValue)
-                                E.Cast(target);
+                                Core.DelayAction(() => E.Cast(target), HumanizerMenu["E"].Cast<Slider>().CurrentValue+50);
                         }
 
                     }
@@ -436,7 +465,7 @@ namespace P1_Katarina
                         if (ComboMenu["E"].Cast<CheckBox>().CurrentValue)
                         {
                             if (E.CanCast(target))
-                                E.Cast(target);
+                                Core.DelayAction(() => E.Cast(target), HumanizerMenu["E"].Cast<Slider>().CurrentValue);
                         }
 
                     }
@@ -449,7 +478,7 @@ namespace P1_Katarina
                     else
                     {
                         if (W.CanCast(target))
-                            Program.W.Cast();
+                            Core.DelayAction(() => W.Cast(), HumanizerMenu["W"].Cast<Slider>().CurrentValue);
                     }
                 }
                 if (ComboMenu["R"].Cast<CheckBox>().CurrentValue)
@@ -467,7 +496,7 @@ namespace P1_Katarina
                         //casts on the prediction
                         Orbwalker.DisableMovement = true;
                         Orbwalker.DisableAttacking = true;
-                        Core.DelayAction(() => Program.R.Cast(), 250);
+                        Core.DelayAction(() => Program.R.Cast(), 100+ HumanizerMenu["R"].Cast<Slider>().CurrentValue);
 
 
                     }
