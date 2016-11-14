@@ -69,7 +69,7 @@ namespace P1_Katarina
 
         //a list that contains Player spells
         private static List<Spell.SpellBase> SpellList = new List<Spell.SpellBase>();
-        public static bool harassNeedToEBack;
+        public static bool harassNeedToEBack = false;
         private static AIHeroClient target;
 
         private static bool HasRBuff()
@@ -177,10 +177,10 @@ namespace P1_Katarina
             HarassAutoharass.Add("AHQ", new CheckBox("Use Q in auto harass"));
             KillStealMenu.Add("Q", new CheckBox("Use Q to killsteal"));
             KillStealMenu.Add("R", new CheckBox("Use R to killsteal", false));
-            HumanizerMenu.Add("Q", new Slider("Q delay DONT MESS WITH FOR NOW", 0, 0, 1000));
-            HumanizerMenu.Add("W", new Slider("W delay DONT MESS WITH FOR NOW", 0, 0, 1000));
-            HumanizerMenu.Add("E", new Slider("E delay DONT MESS WITH FOR NOW", 0, 0, 1000));
-            HumanizerMenu.Add("R", new Slider("R delay Messing with this one is OK", 0, 0, 1000));
+            HumanizerMenu.Add("Q", new Slider("Q delay", 0, 0, 1000));
+            HumanizerMenu.Add("W", new Slider("W delay", 0, 0, 1000));
+            HumanizerMenu.Add("E", new Slider("E delay", 0, 0, 1000));
+            HumanizerMenu.Add("R", new Slider("R delay", 0, 0, 1000));
 
 
 
@@ -246,7 +246,8 @@ namespace P1_Katarina
 
         public static void castQ(Obj_AI_Base target)
         {
-            Q.Cast(target);
+           
+                Q.Cast(target);
 
             // daggers.Add(new Dagger() { StartTime = Game.Time + 2, EndTime = Game.Time + 7, Position = ObjectManager.Get<Obj_AI_Minion>().LastOrDefault(a => a.Name == "HiddenMinion" && a.IsValid).Position });
 
@@ -256,7 +257,10 @@ namespace P1_Katarina
         }
         private static void CastW()
         {
+
             W.Cast();
+
+
 
             //daggers.Add(new Dagger() { StartTime = Game.Time + 1.25f, EndTime = Game.Time + 6.25f, Position = ObjectManager.Get<Obj_AI_Minion>().LastOrDefault(a => a.Name == "HiddenMinion" && a.IsValid).Position });
 
@@ -264,26 +268,29 @@ namespace P1_Katarina
         }
         private static void CastE(Obj_AI_Base target)
         {
+            if (daggers.Count == 0 && !HasRBuff())
+                E.Cast(target);
+            foreach (Dagger dagger in daggers)
             {
-                if (daggers.Count == 0)
+                
+                {
+
+                }
+                if (target.Distance(dagger.Position) <= 550)
+                    User.Spellbook.CastSpell(E.Slot, dagger.Position.Extend(target, 150).To3D(), false, false);
+
+                else if (ComboMenu["EAA"].Cast<CheckBox>().CurrentValue && target.Distance(User) >= User.GetAutoAttackRange())
+                    E.Cast(target);
+                else if (!ComboMenu["EAA"].Cast<CheckBox>().CurrentValue)
                     E.Cast(target);
                 else
-                {
-                    foreach (Dagger dagger in daggers)
-                    {
-                        if (target.Distance(dagger.Position) <= 550)
-                            User.Spellbook.CastSpell(E.Slot, dagger.Position.Extend(target, 150).To3D(), false, false);
-
-                        else if (ComboMenu["EAA"].Cast<CheckBox>().CurrentValue && target.Distance(User) >= User.GetAutoAttackRange())
-                            E.Cast(target);
-                        else if (!ComboMenu["EAA"].Cast<CheckBox>().CurrentValue)
-                            E.Cast(target);
-                        else
-                            return;
-                    }
-                }
-
+                    return;
             }
+
+
+
+
+
         }
         private static void Game_OnTick(EventArgs args)
         {
@@ -360,7 +367,7 @@ namespace P1_Katarina
             if (ObjectManager.Get<Obj_AI_Minion>().LastOrDefault(a => a.Name == "HiddenMinion" && a.IsValid).Position != previouspos)
             {
                 //print("Added dagger");
-                daggers.Add(new Dagger() { StartTime = Game.Time + 1.25f, EndTime = Game.Time + 5.25f, Position = ObjectManager.Get<Obj_AI_Minion>().LastOrDefault(a => a.Name == "HiddenMinion" && a.IsValid).Position });
+                daggers.Add(new Dagger() { StartTime = Game.Time + 1.1f, EndTime = Game.Time + 5.25f, Position = ObjectManager.Get<Obj_AI_Minion>().LastOrDefault(a => a.Name == "HiddenMinion" && a.IsValid).Position });
                 previouspos = ObjectManager.Get<Obj_AI_Minion>().LastOrDefault(a => a.Name == "HiddenMinion" && a.IsValid).Position;
             }
         }
@@ -438,7 +445,7 @@ namespace P1_Katarina
                 Core.DelayAction(() => CastE(target), HumanizerMenu["E"].Cast<Slider>().CurrentValue);
                 Core.DelayAction(() => castQ(target), HumanizerMenu["Q"].Cast<Slider>().CurrentValue);
             }
-            else if (EDamage(target) + IPassiveDamage(target) >= target.Health)
+            else if (EDamage(target) + IPassiveDamage(target) >= target.Health && W.IsReady())
             {
 
                 Core.DelayAction(() => CastE(target), HumanizerMenu["E"].Cast<Slider>().CurrentValue);
@@ -477,11 +484,23 @@ namespace P1_Katarina
 
 
                 Core.DelayAction(() => castQ(target), HumanizerMenu["Q"].Cast<Slider>().CurrentValue);
-                Core.DelayAction(() => CastE(target), HumanizerMenu["E"].Cast<Slider>().CurrentValue + 100);
-                Core.DelayAction(() => CastW(), HumanizerMenu["W"].Cast<Slider>().CurrentValue + 375);
-                Orbwalker.DisableMovement = true;
-                Orbwalker.DisableMovement = true;
-                Core.DelayAction(() => R.Cast(), HumanizerMenu["R"].Cast<Slider>().CurrentValue + 600);
+                if(Q.IsOnCooldown)
+                {
+                    Core.DelayAction(() => CastE(target), HumanizerMenu["E"].Cast<Slider>().CurrentValue);
+                    if(E.IsOnCooldown)
+                    {
+                        Core.DelayAction(() => CastW(), HumanizerMenu["W"].Cast<Slider>().CurrentValue);
+                    }
+                    if (W.IsOnCooldown)
+                    {
+                        Orbwalker.DisableMovement = true;
+                        Orbwalker.DisableMovement = true;
+                        Core.DelayAction(() => R.Cast(), HumanizerMenu["R"].Cast<Slider>().CurrentValue);
+                    }
+                }
+                
+                
+                
                 //Core.DelayAction(() => User.Spellbook.CastSpell(E.Slot, qdaggerpos.Extend(target, 150).To3D(), false, false), HumanizerMenu["E"].Cast<Slider>().CurrentValue + 1250 * ((100 - new[] { 78, 78, 78, 78, 78, 78, 84, 84, 84, 84, 84, 90, 90, 90, 90, 90, 96, 96, 96 }[User.Level]) / 100 * new[] { 0, 10000 / 9500 / 9000 / 8500 / 8000 }[E.Level]));
             }
             else if (E.IsReady() && Q.IsReady() && W.IsReady())
