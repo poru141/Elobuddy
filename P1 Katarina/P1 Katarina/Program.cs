@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using EloBuddy;
+
 using EloBuddy.SDK;
 using EloBuddy.SDK.Events;
 using EloBuddy.SDK.Menu;
@@ -10,7 +11,6 @@ using EloBuddy.SDK.Rendering;
 using SharpDX;
 using System.Timers;
 using static P1_Katarina.Program;
-
 namespace P1_Katarina
 {
     class Program
