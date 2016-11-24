@@ -59,7 +59,7 @@ namespace P1_Katarina
             public float StartTime { get; set; }
             public float EndTime { get; set; }
             public Vector3 Position { get; set; }
-            public int Width = 240;
+            public int Width = 230;
             // Method.
         }
 
@@ -367,7 +367,7 @@ namespace P1_Katarina
             if (ObjectManager.Get<Obj_AI_Minion>().LastOrDefault(a => a.Name == "HiddenMinion" && a.IsValid).Position != previouspos)
             {
                 //print("Added dagger");
-                daggers.Add(new Dagger() { StartTime = Game.Time + 1.1f, EndTime = Game.Time + 5.25f, Position = ObjectManager.Get<Obj_AI_Minion>().LastOrDefault(a => a.Name == "HiddenMinion" && a.IsValid).Position });
+                daggers.Add(new Dagger() { StartTime = Game.Time + 1.25f, EndTime = Game.Time + 5.1f, Position = ObjectManager.Get<Obj_AI_Minion>().LastOrDefault(a => a.Name == "HiddenMinion" && a.IsValid).Position });
                 previouspos = ObjectManager.Get<Obj_AI_Minion>().LastOrDefault(a => a.Name == "HiddenMinion" && a.IsValid).Position;
             }
         }
