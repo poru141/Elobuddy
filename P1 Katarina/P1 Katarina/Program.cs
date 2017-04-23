@@ -23,7 +23,7 @@ namespace P1_Katarina
 
         }
 
-
+       
 
         //makes Player.Instance Player
         private static AIHeroClient User = Player.Instance;
@@ -54,13 +54,11 @@ namespace P1_Katarina
         public class Dagger
         {
 
-            // Class members:
-            // Property.
+            
             public float StartTime { get; set; }
             public float EndTime { get; set; }
             public Vector3 Position { get; set; }
             public int Width = 230;
-            // Method.
         }
 
         //Declare the menu
@@ -77,31 +75,17 @@ namespace P1_Katarina
             var target = TargetSelector.GetTarget(E.Range, DamageType.Mixed);
             return Player.Instance.Spellbook.IsChanneling;
         }
+        public static float SpinDamage(Obj_AI_Base target)
+        {
+            return Player.Instance.CalculateDamageOnUnit(target, DamageType.Magical, ((User.Level / 1.75f) + 3f) * User.Level + 71.5f + 1.25f * (Player.Instance.TotalAttackDamage - Player.Instance.BaseAttackDamage) + User.TotalMagicalDamage * new[] { .55f, .70f, .80f, 1.00f }[R.Level]);
+
+        }
         public static float QDamage(Obj_AI_Base target)
         {
             if (Q.IsReady())
                 return Player.Instance.CalculateDamageOnUnit(target, DamageType.Magical, new[] { 0f, 75f, 105f, 135f, 165f, 195f }[Q.Level] + 0.3f * Player.Instance.TotalMagicalDamage);
             else
                 return 0f;
-        }
-        public static float SpinDamage(Obj_AI_Base target)
-        {
-            if (Q.IsReady())
-            {
-                if (W.IsReady() && E.IsReady())
-                    return 2 * Player.Instance.CalculateDamageOnUnit(target, DamageType.Magical, ((User.Level / 1.75f) + 3f) * User.Level + 71.5f + 1.25f * (Player.Instance.TotalAttackDamage - Player.Instance.BaseAttackDamage) + User.TotalMagicalDamage * new[] { .55f, .70f, .80f, 1.00f }[R.Level]);
-                else if (!W.IsReady() || !E.IsReady())
-                    return Player.Instance.CalculateDamageOnUnit(target, DamageType.Magical, ((User.Level / 1.75f) + 3f) * User.Level + 71.5f + 1.25f * (Player.Instance.TotalAttackDamage - Player.Instance.BaseAttackDamage) + User.TotalMagicalDamage * new[] { .55f, .70f, .80f, 1.00f }[R.Level]);
-            }
-            if (W.IsReady() && E.IsReady())
-                return Player.Instance.CalculateDamageOnUnit(target, DamageType.Magical, ((User.Level / 1.75f) + 3f) * User.Level + 71.5f + 1.25f * (Player.Instance.TotalAttackDamage - Player.Instance.BaseAttackDamage) + User.TotalMagicalDamage * new[] { .55f, .70f, .80f, 1.00f }[R.Level]);
-
-            else
-                return 0f;
-        }
-        public static float IPassiveDamage(Obj_AI_Base target)
-        {
-            return Player.Instance.CalculateDamageOnUnit(target, DamageType.Magical, ((User.Level / 1.75f) + 3f) * User.Level + 71.5f + 1.25f * (Player.Instance.TotalAttackDamage - Player.Instance.BaseAttackDamage) + User.TotalMagicalDamage * new[] { .55f, .70f, .80f, 1.00f }[R.Level]);
         }
         public static float WDamage(Obj_AI_Base target)
         {
@@ -110,41 +94,18 @@ namespace P1_Katarina
         public static float EDamage(Obj_AI_Base target)
         {
             if (E.IsReady())
-                return Player.Instance.CalculateDamageOnUnit(target, DamageType.Magical, new[] { 0f, 25f, 40f, 55f, 70f, 85f }[Q.Level] + 0.25f * Player.Instance.TotalMagicalDamage + 0.75f * User.TotalAttackDamage);
+                return Player.Instance.CalculateDamageOnUnit(target, DamageType.Magical, new[] { 0f, 25f, 40f, 55f, 70f, 85f }[E.Level] + 0.25f * Player.Instance.TotalMagicalDamage + 0.5f * User.TotalAttackDamage);
             else
                 return 0f;
         }
         public static float RDamage(Obj_AI_Base target)
         {
             if (!R.IsOnCooldown)
-                return Player.Instance.CalculateDamageOnUnit(target, DamageType.Magical, (new[] { 0f, 375f, 562.5f, 750f }[R.Level] + 3.3f * Player.Instance.TotalMagicalDamage + 3.3f * (Player.Instance.TotalAttackDamage - Player.Instance.BaseAttackDamage)));
+                return Player.Instance.CalculateDamageOnUnit(target, DamageType.Magical, (new[] { 0f, 375f, 562.5f, 750f }[R.Level] + 2.85f * Player.Instance.TotalMagicalDamage + 3.3f * (Player.Instance.TotalAttackDamage - Player.Instance.BaseAttackDamage)));
             else
                 return 0f;
         }
-        public static float Damagefromcombo(Obj_AI_Base target)
-        {
-            if (target == null)
-            {
-                return 0f;
-            }
-            else
-            {
-                return QDamage(target) + WDamage(target) + EDamage(target) + RDamage(target);
-            }
-        }
-        private static void OnNotify(GameNotifyEventArgs args)
-        {
-            if (args.EventId == GameEventId.OnChampionKill)
-            {
-                ////print("Kill");
-            }
 
-            if (args.EventId == GameEventId.OnDamageTaken)
-            {
-                ////print("Damage");
-            }
-
-        }
         private static void Loading_OnLoadingComplete(EventArgs args)
         {
 
@@ -154,7 +115,6 @@ namespace P1_Katarina
 
             //print("P1 Katarina loaded! Have fun!");
             //Creates the menu
-            int timetodaggerdead = 0;
             KatarinaMenu = MainMenu.AddMenu("Katarina", "P1 Katarina");
 
             //Creates a SubMenu
@@ -235,11 +195,11 @@ namespace P1_Katarina
                 CastW();
             target = TargetSelector.GetTarget(E.Range, DamageType.Magical);
             if (EDamage(target) >= target.Health && KillStealMenu["E"].Cast<CheckBox>().CurrentValue)
-                CastE(target);
+                CastE(target.Position);
             target = TargetSelector.GetTarget(E.Range, DamageType.Magical);
             if (EDamage(target) + WDamage(target) >= target.Health && KillStealMenu["EW"].Cast<CheckBox>().CurrentValue)
             {
-                CastE(target);
+                CastE(target.Position);
                 CastW();
             }
         }
@@ -266,7 +226,7 @@ namespace P1_Katarina
 
             wdaggerpos = User.Position;
         }
-        private static void CastE(Obj_AI_Base target)
+        private static void CastE(Vector3 target)
         {
             if (daggers.Count == 0 && !HasRBuff())
                 E.Cast(target);
@@ -295,6 +255,8 @@ namespace P1_Katarina
         private static void Game_OnTick(EventArgs args)
         {
 
+
+            
             var target = TargetSelector.GetTarget(E.Range, DamageType.Magical);
 
             target = TargetSelector.GetTarget(E.Range, DamageType.Magical);
@@ -393,9 +355,8 @@ namespace P1_Katarina
                 if (target.IsValidTarget() && !harassNeedToEBack)
                 {
                     Core.DelayAction(() => castQ(target), HumanizerMenu["Q"].Cast<Slider>().CurrentValue);
-                    CastW();
-
-                    CastE(target);
+                    Core.DelayAction(() => CastW(), HumanizerMenu["W"].Cast<Slider>().CurrentValue + 50);
+                    Core.DelayAction(() => CastE(target.Position), HumanizerMenu["E"].Cast<Slider>().CurrentValue + 250);
                     if (E.IsOnCooldown)
                         harassNeedToEBack = true;
 
@@ -437,32 +398,33 @@ namespace P1_Katarina
             if (EDamage(target) >= target.Health)
             {
                 //User.Spellbook.CastSpell(E.Slot, qdaggerpos.Extend(target, 150).To3D(), false, false);
-                Core.DelayAction(() => CastE(target), HumanizerMenu["E"].Cast<Slider>().CurrentValue);
+                Core.DelayAction(() => CastE(target.Position), HumanizerMenu["E"].Cast<Slider>().CurrentValue);
+
             }
 
             else if (EDamage(target) + QDamage(target) >= target.Health)
             {
-                Core.DelayAction(() => CastE(target), HumanizerMenu["E"].Cast<Slider>().CurrentValue);
+                Core.DelayAction(() => CastE(target.Position), HumanizerMenu["E"].Cast<Slider>().CurrentValue);
                 Core.DelayAction(() => castQ(target), HumanizerMenu["Q"].Cast<Slider>().CurrentValue);
             }
-            else if (EDamage(target) + IPassiveDamage(target) >= target.Health && W.IsReady())
+            else if (EDamage(target) + SpinDamage(target) >= target.Health && W.IsReady())
             {
 
-                Core.DelayAction(() => CastE(target), HumanizerMenu["E"].Cast<Slider>().CurrentValue);
+                Core.DelayAction(() => CastE(target.Position), HumanizerMenu["E"].Cast<Slider>().CurrentValue);
                 Core.DelayAction(() => CastW(), HumanizerMenu["W"].Cast<Slider>().CurrentValue + 100);
 
 
             }
-            else if (EDamage(target) + IPassiveDamage(target) + QDamage(target) >= target.Health && W.IsReady())
+            else if (EDamage(target) + SpinDamage(target) + QDamage(target) >= target.Health && W.IsReady())
             {
-                Core.DelayAction(() => CastE(target), HumanizerMenu["E"].Cast<Slider>().CurrentValue);
+                Core.DelayAction(() => CastE(target.Position), HumanizerMenu["E"].Cast<Slider>().CurrentValue);
                 Core.DelayAction(() => CastW(), HumanizerMenu["W"].Cast<Slider>().CurrentValue + 100);
                 Core.DelayAction(() => castQ(target), HumanizerMenu["Q"].Cast<Slider>().CurrentValue);
             }
-            else if (EDamage(target) + IPassiveDamage(target) + IPassiveDamage(target) + QDamage(target) >= target.Health && W.IsReady())
+            else if (EDamage(target) + SpinDamage(target) + SpinDamage(target) + QDamage(target) >= target.Health && W.IsReady())
             {
                 Core.DelayAction(() => castQ(target), HumanizerMenu["Q"].Cast<Slider>().CurrentValue);
-                Core.DelayAction(() => CastE(target), HumanizerMenu["E"].Cast<Slider>().CurrentValue);
+                Core.DelayAction(() => CastE(target.Position), HumanizerMenu["E"].Cast<Slider>().CurrentValue);
                 Core.DelayAction(() => CastW(), HumanizerMenu["W"].Cast<Slider>().CurrentValue + 100);
                 Core.DelayAction(() => User.Spellbook.CastSpell(E.Slot, qdaggerpos.Extend(target, 150).To3D(), false, false), HumanizerMenu["E"].Cast<Slider>().CurrentValue + 1250 * ((100 - new[] { 78, 78, 78, 78, 78, 78, 84, 84, 84, 84, 84, 90, 90, 90, 90, 90, 96, 96, 96 }[User.Level]) / 100 * new[] { 0, 10000 / 9500 / 9000 / 8500 / 8000 }[E.Level]));
             }
@@ -478,7 +440,15 @@ namespace P1_Katarina
             {
                 return;
             }
-
+            else if (E.IsReady() && Q.IsReady() && W.IsReady() && R.IsReady())
+            {
+                Core.DelayAction(() => castQ(target), HumanizerMenu["Q"].Cast<Slider>().CurrentValue);
+                Core.DelayAction(() => CastE(Player.Instance.Position.Extend(target, Player.Instance.Distance(target) + 150).To3D()), HumanizerMenu["E"].Cast<Slider>().CurrentValue);
+                Core.DelayAction(() => CastW(), HumanizerMenu["W"].Cast<Slider>().CurrentValue + 375);
+                Orbwalker.DisableMovement = true;
+                Orbwalker.DisableMovement = true;
+                Core.DelayAction(() => R.Cast(), HumanizerMenu["R"].Cast<Slider>().CurrentValue);
+            }
             else if (R.IsReady())
             {
 
@@ -486,9 +456,10 @@ namespace P1_Katarina
                 Core.DelayAction(() => castQ(target), HumanizerMenu["Q"].Cast<Slider>().CurrentValue);
                 if(Q.IsOnCooldown)
                 {
-                    Core.DelayAction(() => CastE(target), HumanizerMenu["E"].Cast<Slider>().CurrentValue);
+                    
                     if(E.IsOnCooldown)
                     {
+                        //
                         Core.DelayAction(() => CastW(), HumanizerMenu["W"].Cast<Slider>().CurrentValue);
                     }
                     if (W.IsOnCooldown)
@@ -505,19 +476,24 @@ namespace P1_Katarina
             }
             else if (E.IsReady() && Q.IsReady() && W.IsReady())
             {
-                Core.DelayAction(() => castQ(target), HumanizerMenu["Q"].Cast<Slider>().CurrentValue);
-                Core.DelayAction(() => CastE(target), HumanizerMenu["E"].Cast<Slider>().CurrentValue + 100);
-                Core.DelayAction(() => CastW(), HumanizerMenu["W"].Cast<Slider>().CurrentValue + 375);
+                Core.DelayAction(() => CastE(target.Position), HumanizerMenu["E"].Cast<Slider>().CurrentValue);
+                Core.DelayAction(() => CastW(), HumanizerMenu["W"].Cast<Slider>().CurrentValue);
+                Core.DelayAction(() => castQ(target), HumanizerMenu["Q"].Cast<Slider>().CurrentValue + 1000);
+                Core.DelayAction(() => CastE(target.Position), HumanizerMenu["E"].Cast<Slider>().CurrentValue);
+
+
+
+
 
             }
             else if (Q.IsReady() && E.IsReady())
             {
                 Core.DelayAction(() => castQ(target), HumanizerMenu["Q"].Cast<Slider>().CurrentValue);
-                Core.DelayAction(() => CastE(target), HumanizerMenu["E"].Cast<Slider>().CurrentValue);
+                Core.DelayAction(() => CastE(target.Position), HumanizerMenu["E"].Cast<Slider>().CurrentValue);
             }
             else if (W.IsReady() && E.IsReady())
             {
-                Core.DelayAction(() => CastE(target), HumanizerMenu["E"].Cast<Slider>().CurrentValue);
+                Core.DelayAction(() => CastE(target.Position), HumanizerMenu["E"].Cast<Slider>().CurrentValue);
                 Core.DelayAction(() => CastW(), HumanizerMenu["W"].Cast<Slider>().CurrentValue);
             }
 
@@ -526,7 +502,7 @@ namespace P1_Katarina
             else if (E.IsReady())
             {
 
-                CastE(target);
+                CastE(target.Position);
 
             }
             else if (W.IsReady())
@@ -567,22 +543,26 @@ namespace P1_Katarina
         private static void Damage_Indicator(EventArgs args)
         {
 
-            foreach (var unit in EntityManager.Heroes.Enemies.Where(u => u.IsValidTarget() && u.IsHPBarRendered)
-                    )
+            foreach (var unit in EntityManager.Heroes.Enemies.Where(x => x.VisibleOnScreen && x.IsValidTarget() && x.IsHPBarRendered))
             {
-
-                if (EDamage(unit) + WDamage(unit) + QDamage(unit) >= unit.Health)
-                {
-
-                }
-
-
-                var damage = Damagefromcombo(unit);
-
-                if (damage <= 0)
-                {
-                    continue;
-                }
+                var damage = 0f;
+                if (Q.IsReady() && W.IsReady() && E.IsReady())
+                    damage = QDamage(unit) + WDamage(unit) + EDamage(unit) + (2f * SpinDamage(unit));
+                else if (Q.IsReady() && W.IsReady())
+                    damage = QDamage(unit) + WDamage(unit) + SpinDamage(unit);
+                else if (Q.IsReady() && E.IsReady())
+                    damage = QDamage(unit) + EDamage(unit) + SpinDamage(unit);
+                else if (W.IsReady() && E.IsReady())
+                    damage = EDamage(unit) + WDamage(unit) + SpinDamage(unit);
+                else if (Q.IsReady())
+                    damage = QDamage(unit);
+                else if (W.IsReady())
+                    damage = WDamage(unit);
+                else if (E.IsReady())
+                    damage = EDamage(unit);
+                if (!R.IsOnCooldown)
+                    damage += RDamage(unit);
+                Chat.Print(damage);
                 var Special_X = unit.ChampionName == "Jhin" || unit.ChampionName == "Annie" ? -12 : 0;
                 var Special_Y = unit.ChampionName == "Jhin" || unit.ChampionName == "Annie" ? -3 : 9;
 
