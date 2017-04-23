@@ -23,7 +23,7 @@ namespace P1_Katarina
 
         }
 
-       
+
 
         //makes Player.Instance Player
         private static AIHeroClient User = Player.Instance;
@@ -46,6 +46,7 @@ namespace P1_Katarina
         public static List<Vector2> daggerpos = new List<Vector2>();
         public static Vector3 qdaggerpos;
         public static Vector3 wdaggerpos;
+        public static int comboNum;
 
 
 
@@ -54,7 +55,7 @@ namespace P1_Katarina
         public class Dagger
         {
 
-            
+
             public float StartTime { get; set; }
             public float EndTime { get; set; }
             public Vector3 Position { get; set; }
@@ -206,8 +207,8 @@ namespace P1_Katarina
 
         public static void castQ(Obj_AI_Base target)
         {
-           
-                Q.Cast(target);
+
+            Q.Cast(target);
 
             // daggers.Add(new Dagger() { StartTime = Game.Time + 2, EndTime = Game.Time + 7, Position = ObjectManager.Get<Obj_AI_Minion>().LastOrDefault(a => a.Name == "HiddenMinion" && a.IsValid).Position });
 
@@ -232,7 +233,7 @@ namespace P1_Katarina
                 E.Cast(target);
             foreach (Dagger dagger in daggers)
             {
-                
+
                 {
 
                 }
@@ -256,7 +257,7 @@ namespace P1_Katarina
         {
 
 
-            
+
             var target = TargetSelector.GetTarget(E.Range, DamageType.Magical);
 
             target = TargetSelector.GetTarget(E.Range, DamageType.Magical);
@@ -391,123 +392,107 @@ namespace P1_Katarina
             }
 
         }
+
         private static void Combo()
         {
             var target = TargetSelector.GetTarget(E.Range, DamageType.Magical);
-
-            if (EDamage(target) >= target.Health)
+            if (E.IsReady() && Q.IsReady() && W.IsReady() && comboNum == 0)
             {
-                //User.Spellbook.CastSpell(E.Slot, qdaggerpos.Extend(target, 150).To3D(), false, false);
-                Core.DelayAction(() => CastE(target.Position), HumanizerMenu["E"].Cast<Slider>().CurrentValue);
-
+                if (!HasRBuff() || (HasRBuff() && target.Health < QDamage(target) + WDamage(target) + EDamage(target) + (2f * SpinDamage(target))))
+                    comboNum = 1;
             }
 
-            else if (EDamage(target) + QDamage(target) >= target.Health)
+            else if (E.IsReady() && Q.IsReady() && comboNum == 0)
             {
-                Core.DelayAction(() => CastE(target.Position), HumanizerMenu["E"].Cast<Slider>().CurrentValue);
-                Core.DelayAction(() => castQ(target), HumanizerMenu["Q"].Cast<Slider>().CurrentValue);
-            }
-            else if (EDamage(target) + SpinDamage(target) >= target.Health && W.IsReady())
-            {
-
-                Core.DelayAction(() => CastE(target.Position), HumanizerMenu["E"].Cast<Slider>().CurrentValue);
-                Core.DelayAction(() => CastW(), HumanizerMenu["W"].Cast<Slider>().CurrentValue + 100);
-
-
-            }
-            else if (EDamage(target) + SpinDamage(target) + QDamage(target) >= target.Health && W.IsReady())
-            {
-                Core.DelayAction(() => CastE(target.Position), HumanizerMenu["E"].Cast<Slider>().CurrentValue);
-                Core.DelayAction(() => CastW(), HumanizerMenu["W"].Cast<Slider>().CurrentValue + 100);
-                Core.DelayAction(() => castQ(target), HumanizerMenu["Q"].Cast<Slider>().CurrentValue);
-            }
-            else if (EDamage(target) + SpinDamage(target) + SpinDamage(target) + QDamage(target) >= target.Health && W.IsReady())
-            {
-                Core.DelayAction(() => castQ(target), HumanizerMenu["Q"].Cast<Slider>().CurrentValue);
-                Core.DelayAction(() => CastE(target.Position), HumanizerMenu["E"].Cast<Slider>().CurrentValue);
-                Core.DelayAction(() => CastW(), HumanizerMenu["W"].Cast<Slider>().CurrentValue + 100);
-                Core.DelayAction(() => User.Spellbook.CastSpell(E.Slot, qdaggerpos.Extend(target, 150).To3D(), false, false), HumanizerMenu["E"].Cast<Slider>().CurrentValue + 1250 * ((100 - new[] { 78, 78, 78, 78, 78, 78, 84, 84, 84, 84, 84, 90, 90, 90, 90, 90, 96, 96, 96 }[User.Level]) / 100 * new[] { 0, 10000 / 9500 / 9000 / 8500 / 8000 }[E.Level]));
-            }
-            else if (target.Distance(User) >= R.Range && HasRBuff() && target.Distance(qdaggerpos) <= 550 && E.IsReady())
-            {
-                Core.DelayAction(() => User.Spellbook.CastSpell(E.Slot, qdaggerpos.Extend(target, 150).To3D(), false, false), HumanizerMenu["E"].Cast<Slider>().CurrentValue);
-            }
-            else if (target.Distance(User) >= R.Range && HasRBuff() && target.Distance(wdaggerpos) <= 550 && E.IsReady())
-            {
-                Core.DelayAction(() => User.Spellbook.CastSpell(E.Slot, wdaggerpos.Extend(target, 150).To3D(), false, false), HumanizerMenu["E"].Cast<Slider>().CurrentValue);
-            }
-            else if (HasRBuff())
-            {
-                return;
-            }
-            else if (E.IsReady() && Q.IsReady() && W.IsReady() && R.IsReady())
-            {
-                Core.DelayAction(() => castQ(target), HumanizerMenu["Q"].Cast<Slider>().CurrentValue);
-                Core.DelayAction(() => CastE(Player.Instance.Position.Extend(target, Player.Instance.Distance(target) + 150).To3D()), HumanizerMenu["E"].Cast<Slider>().CurrentValue);
-                Core.DelayAction(() => CastW(), HumanizerMenu["W"].Cast<Slider>().CurrentValue + 375);
-                Orbwalker.DisableMovement = true;
-                Orbwalker.DisableMovement = true;
-                Core.DelayAction(() => R.Cast(), HumanizerMenu["R"].Cast<Slider>().CurrentValue);
-            }
-            else if (R.IsReady())
-            {
-
-
-                Core.DelayAction(() => castQ(target), HumanizerMenu["Q"].Cast<Slider>().CurrentValue);
-                if(Q.IsOnCooldown)
-                {
-                    
-                    if(E.IsOnCooldown)
-                    {
-                        //
-                        Core.DelayAction(() => CastW(), HumanizerMenu["W"].Cast<Slider>().CurrentValue);
-                    }
-                    if (W.IsOnCooldown)
-                    {
-                        Orbwalker.DisableMovement = true;
-                        Orbwalker.DisableMovement = true;
-                        Core.DelayAction(() => R.Cast(), HumanizerMenu["R"].Cast<Slider>().CurrentValue);
-                    }
-                }
-                
-                
-                
-                //Core.DelayAction(() => User.Spellbook.CastSpell(E.Slot, qdaggerpos.Extend(target, 150).To3D(), false, false), HumanizerMenu["E"].Cast<Slider>().CurrentValue + 1250 * ((100 - new[] { 78, 78, 78, 78, 78, 78, 84, 84, 84, 84, 84, 90, 90, 90, 90, 90, 96, 96, 96 }[User.Level]) / 100 * new[] { 0, 10000 / 9500 / 9000 / 8500 / 8000 }[E.Level]));
-            }
-            else if (E.IsReady() && Q.IsReady() && W.IsReady())
-            {
-                Core.DelayAction(() => CastE(target.Position), HumanizerMenu["E"].Cast<Slider>().CurrentValue);
-                Core.DelayAction(() => CastW(), HumanizerMenu["W"].Cast<Slider>().CurrentValue);
-                Core.DelayAction(() => castQ(target), HumanizerMenu["Q"].Cast<Slider>().CurrentValue + 1000);
-                Core.DelayAction(() => CastE(target.Position), HumanizerMenu["E"].Cast<Slider>().CurrentValue);
-
-
-
-
-
-            }
-            else if (Q.IsReady() && E.IsReady())
-            {
-                Core.DelayAction(() => castQ(target), HumanizerMenu["Q"].Cast<Slider>().CurrentValue);
-                Core.DelayAction(() => CastE(target.Position), HumanizerMenu["E"].Cast<Slider>().CurrentValue);
-            }
-            else if (W.IsReady() && E.IsReady())
-            {
-                Core.DelayAction(() => CastE(target.Position), HumanizerMenu["E"].Cast<Slider>().CurrentValue);
-                Core.DelayAction(() => CastW(), HumanizerMenu["W"].Cast<Slider>().CurrentValue);
+                if (!HasRBuff() || (HasRBuff() && target.Health < QDamage(target) + EDamage(target) + SpinDamage(target)))
+                    comboNum = 2;
             }
 
-            else if (Q.IsReady())
-                Core.DelayAction(() => castQ(target), HumanizerMenu["Q"].Cast<Slider>().CurrentValue);
-            else if (E.IsReady())
+            else if (W.IsReady() && E.IsReady() && comboNum == 0)
             {
+                if (!HasRBuff() || (HasRBuff() && target.Health < EDamage(target) + SpinDamage(target)))
+                    comboNum = 3;
+            }
 
+            else if (E.IsReady() && comboNum == 0)
+            {
+                if (!HasRBuff() || (HasRBuff() && target.Health < EDamage(target)))
+                    comboNum = 4;
+            }
+
+            else if (Q.IsReady() && comboNum == 0)
+            {
+                if (!HasRBuff() || (HasRBuff() && target.Health < QDamage(target)))
+                    comboNum = 5;
+            }
+
+            else if (W.IsReady() && comboNum == 0 && User.Distance(target) <= 300)
+            {
+                if (!HasRBuff())
+                    comboNum = 6;
+            }
+
+            else if (R.IsReady() && comboNum == 0 && User.Distance(target)<=400)
+                comboNum = 7;
+
+            //combo 1, Q W and E
+            if (comboNum == 1)
+            {
+                castQ(target);
+                Core.DelayAction(() => CastE(User.Position.Extend(target.Position, User.Distance(target) + 140).To3D()), 0);
+                Core.DelayAction(() => CastW(), 50);
+
+                if (Q.IsOnCooldown && W.IsOnCooldown && E.IsOnCooldown)
+                    comboNum = 0;
+            }
+
+            //combo 2, Q and E
+            if (comboNum == 2)
+            {
+                castQ(target);
+                Core.DelayAction(() => CastE(User.Position.Extend(target.Position, User.Distance(target) + 140).To3D()), 0);
+
+                if (Q.IsOnCooldown && E.IsOnCooldown)
+                    comboNum = 0;
+            }
+
+            //combo 3, W and E
+            if (comboNum == 3)
+            {
+                Core.DelayAction(() => CastE(User.Position.Extend(target.Position, User.Distance(target) + 140).To3D()), 0);
+                Core.DelayAction(() => CastW(), 50);
+
+
+                if (W.IsOnCooldown && E.IsOnCooldown)
+                    comboNum = 0;
+            }
+
+            //combo 4, E
+            if (comboNum == 4)
+            {
                 CastE(target.Position);
-
+                comboNum = 0;
             }
-            else if (W.IsReady())
+
+            //combo 5, Q
+            if (comboNum == 5)
+            {
+                castQ(target);
+                comboNum = 0;
+            }
+
+            //combo 6, W
+            if (comboNum == 6)
             {
                 CastW();
+                comboNum = 0;
+            }
+
+            //combo 7, R
+            if (comboNum == 7)
+            {
+                R.Cast();
+                comboNum = 0;
             }
 
         }
@@ -562,7 +547,7 @@ namespace P1_Katarina
                     damage = EDamage(unit);
                 if (!R.IsOnCooldown)
                     damage += RDamage(unit);
-                Chat.Print(damage);
+                //Chat.Print(damage);
                 var Special_X = unit.ChampionName == "Jhin" || unit.ChampionName == "Annie" ? -12 : 0;
                 var Special_Y = unit.ChampionName == "Jhin" || unit.ChampionName == "Annie" ? -3 : 9;
 
